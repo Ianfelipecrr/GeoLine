@@ -16,13 +16,9 @@ class RetaR2(Reta):
             x_inicial = float(x_inicial)
             y_inicial = float(y_inicial)
 
-            if len(ponto_inicial) == 2:
-                self._ponto_inicial = (x_inicial, y_inicial)
+            self._ponto_inicial = (x_inicial, y_inicial)
 
-            else:
-                raise ValueError("O ponto deve ter uma coordenada X e uma coordenada Y.")
-
-        except ValueError as erro:
+        except (ValueError, TypeError) as erro:
             raise ValueError(f"Erro de execução: {erro}")
 
     @property
@@ -36,14 +32,10 @@ class RetaR2(Reta):
             x_final = float(x_final)
             y_final = float(y_final)
 
-            if len(ponto_final) == 2:
-                self._ponto_final = (x_final, y_final)
+            self._ponto_final = (x_final, y_final)
 
-            else:
-                raise ValueError("O ponto deve ter uma coordenada X e uma coordenada Y.")
-
-        except ValueError as erro:
-            print(f"Erro na execução: {erro}")
+        except (ValueError, TypeError) as erro:
+            raise ValueError(f"Erro na execução: {erro}")
         
     @property
     def vetor_diretor(self):
@@ -53,39 +45,36 @@ class RetaR2(Reta):
         return x_final - x_inicial, y_final - y_inicial
 
     def equacao_reduzida(self):
-        try:
-            x_inicial, y_inicial = self.ponto_inicial
-            
-            x_final, y_final = self.ponto_final
+        
+        x_inicial, y_inicial = self.ponto_inicial
+        
+        x_final, y_final = self.ponto_final
 
-            if x_final == x_inicial:
-                return f"X = {x_inicial}"
+        if self.ponto_inicial == self.ponto_final:
+            raise ValueError("Os pontos não podem ser idênticos.")
 
-            if self.ponto_inicial == self.ponto_final:
-                raise ValueError("Os pontos não podem ser idênticos.")
-            
-            m = (y_final - y_inicial) / (x_final - x_inicial)
+        if x_final == x_inicial:
+            return f"X = {x_inicial}"
+        
+        m = (y_final - y_inicial) / (x_final - x_inicial)
 
-            b = y_inicial - m * x_inicial
+        b = y_inicial - m * x_inicial
 
-            return f"y = {m}x {b:+}"
-        except ValueError as erro:
-            print(f"Erro na execução")
-
+        return f"y = {m}x {b:+}"
 
     def equacao_simetrica(self):
         x_inicial, y_inicial = self.ponto_inicial
-                
-        x_final, y_final = self.ponto_final
 
         x_vet_dir,y_vet_dir = self.vetor_diretor
 
-        if x_inicial and y_final >= 0:
-            return f"{x_final} - {x_inicial} / {x_vet_dir} = {y_final} - {y_inicial} / {y_vet_dir}"
-        elif x_inicial <= 0:
-            return f"{x_final} - ({x_inicial}) / {x_vet_dir} = {y_final} - {y_inicial} / {y_vet_dir}"
-        elif y_inicial <= 0:
-            return f"{x_final} - {x_inicial} / {x_vet_dir} = {y_final} - ({y_inicial}) / {y_vet_dir}"
-        elif x_inicial and y_inicial <= 0:
-            return f"{x_final} - ({x_inicial}) / {x_vet_dir} = {y_final} - ({y_inicial}) / {y_vet_dir}"
+        if x_vet_dir == 0 and y_vet_dir == 0:
+            raise ValueError("Os pontos não podem ser iguais.")
+
+        if x_vet_dir == 0:
+            return f"x = {x_inicial}"
+
+        elif y_vet_dir == 0:
+            return f"y = {y_inicial}"
+
+        return f"x - ({x_inicial}) / {x_vet_dir} = y - ({y_inicial}) / {y_vet_dir}"
         
