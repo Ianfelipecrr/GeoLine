@@ -42,8 +42,13 @@ class RetaR2(Reta):
         x_inicial, y_inicial = self.ponto_inicial
         x_final, y_final = self.ponto_final
 
-        return x_final - x_inicial, y_final - y_inicial
-
+        if x_final - x_inicial == 0 and y_final - y_inicial == 0:
+            raise ValueError("Os pontos não podem ser iguais.")
+        
+        else:
+            return x_final - x_inicial, y_final - y_inicial
+    
+    @property
     def equacao_reduzida(self):
         
         x_inicial, y_inicial = self.ponto_inicial
@@ -60,15 +65,13 @@ class RetaR2(Reta):
 
         b = y_inicial - m * x_inicial
 
-        return f"y = {m}x {b:+}"
+        return f"y = {m}x {b:+}" # o modificador ":+" insere o sinal do número (+ ou -)
 
+    @property
     def equacao_simetrica(self):
         x_inicial, y_inicial = self.ponto_inicial
 
         x_vet_dir,y_vet_dir = self.vetor_diretor
-
-        if x_vet_dir == 0 and y_vet_dir == 0:
-            raise ValueError("Os pontos não podem ser iguais.")
 
         if x_vet_dir == 0:
             return f"x = {x_inicial}"
@@ -77,4 +80,15 @@ class RetaR2(Reta):
             return f"y = {y_inicial}"
 
         return f"x - ({x_inicial}) / {x_vet_dir} = y - ({y_inicial}) / {y_vet_dir}"
-        
+
+    @property
+    def equacao_vetorial(self):
+        return f"X = {self._ponto_inicial} + t . {self.vetor_diretor}"
+
+    @property
+    def equacao_parametrica(self):
+
+        return (
+            f"X = {self._ponto_inicial[0]} + t . ({self.vetor_diretor[0]})",
+            f"Y = {self._ponto_inical[1]} + t . ({self.vetor_diretor[1]})"
+        )
