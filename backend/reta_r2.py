@@ -9,6 +9,19 @@ class RetaR2(Reta):
         self.ponto_inicial = ponto_inicial
         self.ponto_final = ponto_final
 
+    def _formatar_fracao(self, numerador, denominador):
+
+        numerador = str(numerador)
+        denominador = str(denominador)
+
+        largura = max(len(numerador), len(denominador), 3)
+
+        return(
+            f"{numerador:^{largura}}\n"
+            f"{'-' * largura}\n"
+            f"{denominador:^{largura}}"
+        )
+
     @Reta.ponto_inicial.setter
     def ponto_inicial(self, ponto_inicial):
         try:
@@ -45,8 +58,7 @@ class RetaR2(Reta):
         if x_final - x_inicial == 0 and y_final - y_inicial == 0:
             raise ValueError("Os pontos não podem ser iguais.")
         
-        else:
-            return x_final - x_inicial, y_final - y_inicial
+        return x_final - x_inicial, y_final - y_inicial
     
     @property
     def equacao_reduzida(self):
@@ -68,7 +80,7 @@ class RetaR2(Reta):
         return f"y = {m}x {b:+}" # o modificador ":+" insere o sinal do número (+ ou -)
 
     @property
-    def equacao_simetrica(self):
+    def equacao_simetrica(self, id = 0):
         x_inicial, y_inicial = self.ponto_inicial
 
         x_vet_dir,y_vet_dir = self.vetor_diretor
@@ -79,16 +91,28 @@ class RetaR2(Reta):
         elif y_vet_dir == 0:
             return f"y = {y_inicial}"
 
-        return f"x - ({x_inicial}) / {x_vet_dir} = y - ({y_inicial}) / {y_vet_dir}"
+        if id == 0:
+            return(
+                f"(x - ({x_inicial})) \n {x_vet_dir} = (y - ({y_inicial})) / {y_vet_dir}"
+            ) 
+        elif id == 1:
+            numerado_x = f"x - {x_inicial}"
+            numerador_y = f"y - {y_inicial}"
+
+            
+            return(
+
+            )
 
     @property
     def equacao_vetorial(self):
-        return f"X = {self._ponto_inicial} + t . {self.vetor_diretor}"
+        return(
+            f"X = {self.ponto_inicial} + t . ({self.vetor_diretor})"
+        ) 
 
     @property
     def equacao_parametrica(self):
-
-        return (
-            f"X = {self._ponto_inicial[0]} + t . ({self.vetor_diretor[0]})",
-            f"Y = {self._ponto_inical[1]} + t . ({self.vetor_diretor[1]})"
+        return(
+            f"X = {self.ponto_inicial[0]} + t . ({self.vetor_diretor[0]})",
+            f"Y = {self.ponto_inicial[1]} + t . ({self.vetor_diretor[1]})"
         )
