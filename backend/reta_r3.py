@@ -1,7 +1,48 @@
+
+from math import atan2, degrees, isfinite, sqrt
+from numbers import Real
+
+from backend.reta import Reta
+from backend.vetor import Vetor
+
+
+def _produto_escalar(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+
+def _produto_vetorial(a, b):
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
+
+
+def _norma(a):
+    return sqrt(_produto_escalar(a, a))
+
+
+def _formatar_numero(valor):
+    """Mostra 2.0 como 2, mantendo frações como 0.5."""
+    if isinstance(valor, float) and valor.is_integer():
+        return str(int(valor))
+    return str(valor)
+
+
+def _formatar_numerador(simbolo, ponto):
+    """Formata (simbolo - ponto) com sinal limpo: x, (x - 1) ou (x + 2)."""
+    if ponto == 0:
+        return simbolo
+    if ponto > 0:
+        return f"({simbolo} - {_formatar_numero(ponto)})"
+    return f"({simbolo} + {_formatar_numero(-ponto)})"
+
+
 class RetaR3(Reta):
     """
     Representa uma reta no R³ e analisa suas relações geométricas
-    com pontos e com outras retas.
+    com pontos e com outras retas. O construtor recebe dois pontos;
+    use ``por_ponto_e_direcao`` quando a entrada for ponto + direção.
 
     A reta é definida por um ponto pertencente a ela (ponto inicial)
     e por um vetor diretor não nulo, ambos com três coordenadas.
@@ -60,37 +101,16 @@ class RetaR3(Reta):
     As verificações geométricas usam tolerância numérica relativa de
     1e-9 por padrão, para lidar com aproximações de ponto flutuante.
     """
-from math import acos, degrees, isfinite, sqrt
-from numbers import Real
-
-from backend.reta import Reta
-from backend.vetor import Vetor
-
-
-def _produto_escalar(a, b):
-    return sum(x * y for x, y in zip(a, b))
-
-
-def _produto_vetorial(a, b):
-    return (
-        a[1] * b[2] - a[2] * b[1],
-        a[2] * b[0] - a[0] * b[2],
-        a[0] * b[1] - a[1] * b[0],
-    )
-
-
-def _norma(a):
-    return sqrt(_produto_escalar(a, a))
-
-
-class RetaR3(Reta):
-    """Representa uma reta no R³ por um ponto e um vetor diretor."""
     __slots__ = ()
 
-    def __init__(self, ponto_inicial, vetor_diretor):
+    def __init__(self, ponto_inicial, ponto_final):
+        """Cria a reta por dois pontos distintos do R³, conforme o contrato."""
+        if not isinstance(ponto_inicial, Vetor) or not isinstance(ponto_final, Vetor):
+            raise TypeError("Os pontos devem ser objetos Vetor.")
+        if ponto_inicial.dimensao != 3 or ponto_final.dimensao != 3:
+            raise ValueError("RetaR3 exige dois pontos com dimensão 3.")
+        vetor_diretor = ponto_final.subtrair(ponto_inicial)
         super().__init__(ponto_inicial, vetor_diretor)
-        if self.dimensao != 3:
-            raise ValueError("RetaR3 exige ponto e vetor diretor com dimensão 3.")
 
     # ------------------------------------------------------------------
     # Construção alternativa
@@ -102,7 +122,18 @@ class RetaR3(Reta):
             raise TypeError("Os pontos devem ser objetos Vetor.")
         if ponto_a.dimensao != ponto_b.dimensao:
             raise ValueError("Os pontos devem ter a mesma dimensão.")
-        return cls(ponto_a, ponto_b.subtrair(ponto_a))
+        return cls(ponto_a, ponto_b)
+
+    @classmethod
+    def por_ponto_e_direcao(cls, ponto_inicial, vetor_diretor):
+        """Cria a reta a partir de um ponto e um vetor diretor não nulo."""
+        if not isinstance(ponto_inicial, Vetor) or not isinstance(vetor_diretor, Vetor):
+            raise TypeError("O ponto e o vetor diretor devem ser objetos Vetor.")
+        if ponto_inicial.dimensao != 3 or vetor_diretor.dimensao != 3:
+            raise ValueError("RetaR3 exige ponto e vetor diretor com dimensão 3.")
+        instancia = cls.__new__(cls)
+        Reta.__init__(instancia, ponto_inicial, vetor_diretor)
+        return instancia
 
     # ------------------------------------------------------------------
     # Validações internas
@@ -131,13 +162,15 @@ class RetaR3(Reta):
             simbolos, self.ponto_inicial.coordenadas, self.vetor_diretor.coordenadas
         ):
             if d == 0:
-                fixas.append(f"{simbolo} = {p}")
+                fixas.append(f"{simbolo} = {_formatar_numero(p)}")
             else:
-                fracoes.append(f"({simbolo} - {p})/{d}")
-        texto = " = ".join(fracoes)
-        if fixas:
-            texto += ", " + ", ".join(fixas)
-        return texto
+                numerador = _formatar_numerador(simbolo, p)
+                fracoes.append(f"{numerador}/{_formatar_numero(d)}")
+        partes = []
+        if fracoes:
+            partes.append(" = ".join(fracoes))
+        partes.extend(fixas)
+        return ", ".join(partes)
 
     # ------------------------------------------------------------------
     # Relações com pontos
@@ -176,8 +209,10 @@ class RetaR3(Reta):
         self._validar_reta(outra)
         u = self.vetor_diretor.coordenadas
         v = outra.vetor_diretor.coordenadas
-        cosseno = abs(_produto_escalar(u, v)) / (_norma(u) * _norma(v))
-        return degrees(acos(min(1.0, cosseno)))
+        produto_vetorial = _produto_vetorial(u, v)
+        seno_relativo = _norma(produto_vetorial)
+        produto_escalar = abs(_produto_escalar(u, v))
+        return degrees(atan2(seno_relativo, produto_escalar))
 
     def posicao_relativa(self, outra, tolerancia=1e-9):
         """Retorna 'coincidentes', 'paralelas', 'concorrentes' ou 'reversas'."""
@@ -226,4 +261,4 @@ class RetaR3(Reta):
         return self.obter_ponto(t)
 
     def __repr__(self):
-        return f"RetaR3({self.ponto_inicial!r}, {self.vetor_diretor!r})"
+        return f"RetaR3({self.ponto_inicial!r}, {self.obter_ponto(1)!r})"
