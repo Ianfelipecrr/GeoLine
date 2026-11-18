@@ -1,118 +1,71 @@
 from .reta import Reta
+from .vetor import Vetor
+from sympy import Eq, pretty, symbols
 
 class RetaR2(Reta):
 
-    __slots__ = ("_ponto_inicial", "_ponto_final")
+    __slots__ = ()
 
     
     def __init__(self, ponto_inicial, ponto_final):
-        self.ponto_inicial = ponto_inicial
-        self.ponto_final = ponto_final
+        if not isinstance(ponto_inicial, Vetor):
+            ponto_inicial = Vetor(ponto_inicial)
 
-    def _formatar_fracao(self, numerador, denominador):
+        if not isinstance(ponto_final, Vetor):
+            ponto_final = Vetor(ponto_final)
 
-        numerador = str(numerador)
-        denominador = str(denominador)
+        if ponto_inicial.dimensao != 2 or ponto_final.dimensao != 2:
+            raise ValueError("A dimensão deve ser 2 para Reta em R².")
 
-        largura = max(len(numerador), len(denominador), 3)
+        vetor_diretor = ponto_final.subtrair(ponto_inicial)
 
-        return(
-            f"{numerador:^{largura}}\n"
-            f"{'-' * largura}\n"
-            f"{denominador:^{largura}}"
-        )
-
-    @Reta.ponto_inicial.setter
-    def ponto_inicial(self, ponto_inicial):
-        try:
-            x_inicial, y_inicial = ponto_inicial
-            x_inicial = float(x_inicial)
-            y_inicial = float(y_inicial)
-
-            self._ponto_inicial = (x_inicial, y_inicial)
-
-        except (ValueError, TypeError) as erro:
-            raise ValueError(f"Erro de execução: {erro}")
+        super().__init__(ponto_inicial, vetor_diretor)
 
     @property
     def ponto_final(self):
-        return self._ponto_final
-
-    @ponto_final.setter
-    def ponto_final(self, ponto_final):
-        try:
-            x_final, y_final = ponto_final
-            x_final = float(x_final)
-            y_final = float(y_final)
-
-            self._ponto_final = (x_final, y_final)
-
-        except (ValueError, TypeError) as erro:
-            raise ValueError(f"Erro na execução: {erro}")
-        
-    @property
-    def vetor_diretor(self):
-        x_inicial, y_inicial = self.ponto_inicial
-        x_final, y_final = self.ponto_final
-
-        if x_final - x_inicial == 0 and y_final - y_inicial == 0:
-            raise ValueError("Os pontos não podem ser iguais.")
-        
-        return x_final - x_inicial, y_final - y_inicial
+        return self.ponto_inicial.somar(self.vetor_diretor)
     
     @property
     def equacao_reduzida(self):
-        
-        x_inicial, y_inicial = self.ponto_inicial
-        
-        x_final, y_final = self.ponto_final
+        x_inicial, y_inicial = self.ponto_inicial.coordenadas
+        a, b = self.vetor_diretor.coordenadas
 
-        if self.ponto_inicial == self.ponto_final:
-            raise ValueError("Os pontos não podem ser idênticos.")
-
-        if x_final == x_inicial:
+        if a == 0:
             return f"X = {x_inicial}"
         
-        m = (y_final - y_inicial) / (x_final - x_inicial)
+        m = b / a
 
-        b = y_inicial - m * x_inicial
+        coeficiente_linear = y_inicial - m * x_inicial
 
-        return f"y = {m}x {b:+}" # o modificador ":+" insere o sinal do número (+ ou -)
+        return f"y = {m}x {coeficiente_linear:+}" # o modificador ":+" insere o sinal do número (+ ou -)
 
-    @property
-    def equacao_simetrica(self, id = 0):
-        x_inicial, y_inicial = self.ponto_inicial
+    def equacao_simetrica(self, form = 1):
 
-        x_vet_dir,y_vet_dir = self.vetor_diretor
+        if form not in (0,1):
+            raise ValueError("Form deve ser 0 ou 1.")
+        
+        x_inicial, y_inicial = self.ponto_inicial.coordenadas
+        a, b = self.vetor_diretor.coordenadas
 
-        if x_vet_dir == 0:
+        if a == 0:
             return f"x = {x_inicial}"
 
-        elif y_vet_dir == 0:
-            return f"y = {y_inicial}"
+        elif b == 0:
+            return f"Y = {y_inicial}"
 
-        if id == 0:
-            return(
-                f"(x - ({x_inicial})) \n {x_vet_dir} = (y - ({y_inicial})) / {y_vet_dir}"
-            ) 
-        elif id == 1:
-            numerado_x = f"x - {x_inicial}"
-            numerador_y = f"y - {y_inicial}"
-
-            
-            return(
-
+        if form == 0:
+            return (
+                f"(x - ({x_inicial})) / ({a}) = "
+                f"(y - ({y_inicial})) / ({b})"
             )
+        
+        else:
+            x, y = symbols("x y")
 
-    @property
-    def equacao_vetorial(self):
-        return(
-            f"X = {self.ponto_inicial} + t . ({self.vetor_diretor})"
-        ) 
-
-    @property
-    def equacao_parametrica(self):
-        return(
-            f"X = {self.ponto_inicial[0]} + t . ({self.vetor_diretor[0]})",
-            f"Y = {self.ponto_inicial[1]} + t . ({self.vetor_diretor[1]})"
-        )
+            equacao = Eq(
+                (x - x_inicial) / a,
+                (y - y_inicial) / b
+            )
+            return(
+                pretty(equacao)
+            )
