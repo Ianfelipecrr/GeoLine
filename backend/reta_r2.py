@@ -37,7 +37,7 @@ class RetaR2(Reta):
 
         coeficiente_linear = y_inicial - m * x_inicial
 
-        return f"y = {m}x {coeficiente_linear:+}" # o modificador ":+" insere o sinal do número (+ ou -)
+        return f"y = {m}x{coeficiente_linear:+}" # o modificador ":+" insere o sinal do número (+ ou -)
 
     def equacao_simetrica(self, form = 1):
 
